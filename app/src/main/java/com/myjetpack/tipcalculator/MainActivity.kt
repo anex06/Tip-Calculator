@@ -6,27 +6,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.myjetpack.tipcalculator.components.InputField
 import com.myjetpack.tipcalculator.ui.theme.TipCalculatorTheme
+import com.myjetpack.tipcalculator.widgets.RoundIconButton
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,18 +59,18 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@Preview
 @Composable
 fun CreateTopHeader(totalPerPerson: Double=134.0){
 
     Card(modifier = Modifier
         .height(height = 150.dp)
         .fillMaxSize()
+        .padding(15.dp)
         , shape = RoundedCornerShape(size = 10.dp)
         , backgroundColor = Color(0xFFe8d2f2)
         ) {
           Column(verticalArrangement = Arrangement.Center,
-              horizontalAlignment = Alignment.CenterHorizontally) {
+              horizontalAlignment = CenterHorizontally) {
               val total = "%.2f".format(totalPerPerson)
               Text(text = "Total Per Person",
                   style = TextStyle(fontWeight = FontWeight.Bold))
@@ -104,15 +105,27 @@ onValueChange: (String)->Unit={}){
         totalBillState.value.trim().isNotEmpty()
     }
 
+    val range = IntRange(1, 100)
+    val spiltByState = remember {
+        mutableStateOf(1)
+    }
+
+
+    val sliderPositionState  = remember {
+        mutableStateOf(0f)
+    }
+
+    val tipPercentage = (sliderPositionState.value*100).toInt()
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Surface(modifier = Modifier
-        .height(height = 200.dp)
+    Surface(modifier = modifier
+        .height(height = 250.dp)
         .fillMaxSize()
         , border = BorderStroke(width = 1.dp, color = Color.LightGray)
         , shape = RoundedCornerShape(size = 10.dp)
     ){
-        Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 14.dp)) {
+        Column(modifier = modifier.padding(start = 10.dp, end = 10.dp, top = 14.dp, bottom = 14.dp)) {
             InputField(valueState = totalBillState,
                 labelId = "Enter Bill",
                 enabled = true,
@@ -123,61 +136,65 @@ onValueChange: (String)->Unit={}){
                     keyboardController?.hide()
                 }
             )
+           // if (validState){
+                Row(modifier = modifier.padding(horizontal = 3.dp),
+                    horizontalArrangement = Arrangement.Start,
+                verticalAlignment = CenterVertically
+                ) {
+                    Text(text = "Spilt")
+                    Spacer(modifier = modifier.width(120.dp))
+                    Row(modifier = modifier.padding(horizontal = 3.dp),
+                        horizontalArrangement = Arrangement.End) {
+                        RoundIconButton(modifier = modifier,
+                            imageVector = Icons.Default.Remove, onClick = {
+                                if (spiltByState.value!=1){
+                                    spiltByState.value=spiltByState.value-1
+                                }
+                                Log.d("Onclick remove person: ", spiltByState.value.toString())
+                            })
+                        Text(text = spiltByState.value.toString(),
+                            modifier = modifier
+                                .align(alignment = CenterVertically)
+                                .padding(9.dp))
+                        RoundIconButton(modifier = modifier,
+                            imageVector = Icons.Default.Add, onClick = {
+                                if (spiltByState.value<range.last){
+                                    spiltByState.value = spiltByState.value+1
+                                }
+                                Log.d("Onclick add person: ", spiltByState.value.toString())
 
-            Spacer(Modifier.height(20.dp))
+                            })
+                    }
 
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Spilt")
-                OutlinedButton(onClick = {
 
-                },shape = CircleShape,
-                    modifier = Modifier.size(40.dp),
-                    border = BorderStroke(width = 1.2.dp,
-                        color=Color.LightGray),
-                    contentPadding = PaddingValues(0.dp),
-                    elevation = ButtonDefaults.elevation(defaultElevation = 5.dp)
-                ){
-                    Icon(painter = painterResource(id = R.drawable.ic_baseline_substract_24),
-                        tint = Color.Black,
-                        contentDescription = "Decrease amount")
+                }
+            //Tip row
+                Row(modifier = modifier.padding(horizontal = 3.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = CenterVertically
+                ) {
+                    Text(text = "Tip", modifier.align(alignment = CenterVertically))
+                    Spacer(modifier = modifier.width(200.dp))
+                    Text(text = "$33",modifier.align(alignment = CenterVertically))
                 }
 
-                Text(text = "1", modifier = Modifier.padding(5.dp))
+            Column(horizontalAlignment = CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+                ) {
+                Text("$tipPercentage %")
+                Spacer(modifier = modifier.height(14.dp))
 
-                OutlinedButton(onClick = {
-
-                },shape = CircleShape,
-                    modifier = Modifier.size(40.dp),
-                    border = BorderStroke(width = 1.2.dp,
-                        color=Color.LightGray),
-                    contentPadding = PaddingValues(0.dp),
-                    elevation = ButtonDefaults.elevation(defaultElevation = 5.dp,)
-
-                ){
-                    Icon(Icons.Default.Add,
-                        contentDescription = "Add amount",
-                        tint = Color.Black)
-                }
-
+                //Slider
+                Slider(value = sliderPositionState.value, onValueChange = { newVal->
+                    sliderPositionState.value=newVal
+                    Log.d("Slider value: ", sliderPositionState.value.toString())
+                }, modifier = modifier.padding(start = 16.dp, end = 16.dp),
+                steps = 10,
+                    onValueChangeFinished={
+                        //Log.d()
+                    })
             }
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Tip")
-                Text(text = "$22")
-                Text(text = "")
-
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()) {
-                Text(text = "")
-                Text(text = "12%")
-
-            }
-
+            //}
         }
     }
 }
