@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -27,6 +28,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.myjetpack.tipcalculator.components.InputField
 import com.myjetpack.tipcalculator.ui.theme.TipCalculatorTheme
+import com.myjetpack.tipcalculator.util.calculateTotalPerPerson
+import com.myjetpack.tipcalculator.util.calculateTotalTip
 import com.myjetpack.tipcalculator.widgets.RoundIconButton
 
 class MainActivity : ComponentActivity() {
@@ -35,7 +38,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp{
                 Column(modifier = Modifier.padding(20.dp)) {
-                    CreateTopHeader()
+                    //CreateTopHeader()
                     Spacer(Modifier.height(10.dp))
                     CreateMainContent()
                 }
@@ -117,12 +120,19 @@ onValueChange: (String)->Unit={}){
 
     val tipPercentage = (sliderPositionState.value*100).toInt()
 
+    val tipAmountState = remember {
+        mutableStateOf(0.0)
+    }
+
+    val totalPerPersonState = remember {
+        mutableStateOf(0.0)
+    }
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    CreateTopHeader(totalPerPerson = totalPerPersonState.value)
+
     Surface(modifier = modifier
-        .height(height = 250.dp)
-        .fillMaxSize()
-        , border = BorderStroke(width = 1.dp, color = Color.LightGray)
+        ,border = BorderStroke(width = 1.dp, color = Color.LightGray)
         , shape = RoundedCornerShape(size = 10.dp)
     ){
         Column(modifier = modifier.padding(start = 10.dp, end = 10.dp, top = 14.dp, bottom = 14.dp)) {
@@ -136,7 +146,9 @@ onValueChange: (String)->Unit={}){
                     keyboardController?.hide()
                 }
             )
-           // if (validState){
+           if (validState){
+
+               // Add & remove button
                 Row(modifier = modifier.padding(horizontal = 3.dp),
                     horizontalArrangement = Arrangement.Start,
                 verticalAlignment = CenterVertically
@@ -149,8 +161,9 @@ onValueChange: (String)->Unit={}){
                             imageVector = Icons.Default.Remove, onClick = {
                                 if (spiltByState.value!=1){
                                     spiltByState.value=spiltByState.value-1
+                                    totalPerPersonState.value= calculateTotalPerPerson(totalBillState.value.toDouble(),
+                                    spiltByState.value, tipPercentage)
                                 }
-                                Log.d("Onclick remove person: ", spiltByState.value.toString())
                             })
                         Text(text = spiltByState.value.toString(),
                             modifier = modifier
@@ -158,11 +171,11 @@ onValueChange: (String)->Unit={}){
                                 .padding(9.dp))
                         RoundIconButton(modifier = modifier,
                             imageVector = Icons.Default.Add, onClick = {
-                                if (spiltByState.value<range.last){
+                                if (spiltByState.value < range.last){
                                     spiltByState.value = spiltByState.value+1
+                                    totalPerPersonState.value= calculateTotalPerPerson(totalBillState.value.toDouble(),
+                                        spiltByState.value, tipPercentage)
                                 }
-                                Log.d("Onclick add person: ", spiltByState.value.toString())
-
                             })
                     }
 
@@ -175,7 +188,7 @@ onValueChange: (String)->Unit={}){
                 ) {
                     Text(text = "Tip", modifier.align(alignment = CenterVertically))
                     Spacer(modifier = modifier.width(200.dp))
-                    Text(text = "$33",modifier.align(alignment = CenterVertically))
+                    Text(text = "$ ${tipAmountState.value}",modifier.align(alignment = CenterVertically))
                 }
 
             Column(horizontalAlignment = CenterHorizontally,
@@ -185,16 +198,28 @@ onValueChange: (String)->Unit={}){
                 Spacer(modifier = modifier.height(14.dp))
 
                 //Slider
-                Slider(value = sliderPositionState.value, onValueChange = { newVal->
+                Slider(value = sliderPositionState.value,
+                    onValueChange = { newVal->
                     sliderPositionState.value=newVal
-                    Log.d("Slider value: ", sliderPositionState.value.toString())
+
+                        tipAmountState.value = calculateTotalTip(totalBillState.value.toDouble(),
+                            tipPercentage)
+
+                        totalPerPersonState.value = calculateTotalPerPerson(totalBillState.value.toDouble(),
+                        spiltByState.value,
+                        tipPercentage)
+
                 }, modifier = modifier.padding(start = 16.dp, end = 16.dp),
-                steps = 10,
+                steps = 5,
                     onValueChangeFinished={
                         //Log.d()
                     })
             }
-            //}
+            }else Box() {
+               
+           }
         }
     }
 }
+
+
