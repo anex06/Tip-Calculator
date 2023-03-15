@@ -88,17 +88,40 @@ fun CreateTopHeader(totalPerPerson: Double=134.0){
 @Preview
 @Composable
 fun CreateMainContent(){
-  BillForm { billAmount->
-      Log.d("Amount", billAmount)
 
+    val spiltByState = remember {
+        mutableStateOf(1)
+    }
 
-  }
+    val tipAmountState = remember {
+        mutableStateOf(0.0)
+    }
+
+    val totalPerPersonState = remember {
+        mutableStateOf(0.0)
+    }
+
+  BillForm(splitByState=spiltByState,
+      tipAmountState=tipAmountState,
+      //range=IntRange(1,50),
+      totalPerPersonState=totalPerPersonState) {}
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
+
 fun BillForm(modifier: Modifier=Modifier,
+             range: IntRange = 1..100,
+             splitByState: MutableState<Int>,
+             tipAmountState: MutableState<Double>,
+             totalPerPersonState: MutableState<Double>,
 onValueChange: (String)->Unit={}){
+
+    val sliderPositionState  = remember {
+        mutableStateOf(0f)
+    }
+
+    val tipPercentage = (sliderPositionState.value*100).toInt()
 
     val totalBillState = remember {
         mutableStateOf("")
@@ -108,25 +131,6 @@ onValueChange: (String)->Unit={}){
         totalBillState.value.trim().isNotEmpty()
     }
 
-    val range = IntRange(1, 100)
-    val spiltByState = remember {
-        mutableStateOf(1)
-    }
-
-
-    val sliderPositionState  = remember {
-        mutableStateOf(0f)
-    }
-
-    val tipPercentage = (sliderPositionState.value*100).toInt()
-
-    val tipAmountState = remember {
-        mutableStateOf(0.0)
-    }
-
-    val totalPerPersonState = remember {
-        mutableStateOf(0.0)
-    }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     CreateTopHeader(totalPerPerson = totalPerPersonState.value)
@@ -159,22 +163,22 @@ onValueChange: (String)->Unit={}){
                         horizontalArrangement = Arrangement.End) {
                         RoundIconButton(modifier = modifier,
                             imageVector = Icons.Default.Remove, onClick = {
-                                if (spiltByState.value!=1){
-                                    spiltByState.value=spiltByState.value-1
+                                if (splitByState.value!=1){
+                                    splitByState.value=splitByState.value-1
                                     totalPerPersonState.value= calculateTotalPerPerson(totalBillState.value.toDouble(),
-                                    spiltByState.value, tipPercentage)
+                                        splitByState.value, tipPercentage)
                                 }
                             })
-                        Text(text = spiltByState.value.toString(),
+                        Text(text = splitByState.value.toString(),
                             modifier = modifier
                                 .align(alignment = CenterVertically)
                                 .padding(9.dp))
                         RoundIconButton(modifier = modifier,
                             imageVector = Icons.Default.Add, onClick = {
-                                if (spiltByState.value < range.last){
-                                    spiltByState.value = spiltByState.value+1
+                                if (splitByState.value < range.last){
+                                    splitByState.value = splitByState.value+1
                                     totalPerPersonState.value= calculateTotalPerPerson(totalBillState.value.toDouble(),
-                                        spiltByState.value, tipPercentage)
+                                        splitByState.value, tipPercentage)
                                 }
                             })
                     }
@@ -206,7 +210,7 @@ onValueChange: (String)->Unit={}){
                             tipPercentage)
 
                         totalPerPersonState.value = calculateTotalPerPerson(totalBillState.value.toDouble(),
-                        spiltByState.value,
+                            splitByState.value,
                         tipPercentage)
 
                 }, modifier = modifier.padding(start = 16.dp, end = 16.dp),
